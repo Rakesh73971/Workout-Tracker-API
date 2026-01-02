@@ -69,3 +69,28 @@ class ExerciseResponse(ExerciseBase):
     
 class TokenData(BaseModel):
     id : Optional[int] = None
+
+
+class ExerciseLogBase(BaseModel):
+    user_id : int
+    exercise_id : int
+    date : datetime
+    sets : int
+    reps : int
+    weight : float
+    duration : int
+
+class ExerciseLogUpdate(BaseModel):
+    user_id : Optional[int] = None
+    exercise_id : Optional[int] = None
+    date : Optional[datetime] = None
+    sets : Optional[int] = None
+    reps : Optional[int] = None
+    weight : Optional[float] = None
+    duration : Optional[int] = None
+
+class ExerciseLogResponse(ExerciseLogBase):
+    id : int
+
+    class Config:
+        from_attributes = True
