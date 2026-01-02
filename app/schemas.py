@@ -54,6 +54,12 @@ class ExerciseBase(BaseModel):
     muscle_group : str
     equipment : str
 
+class ExerciseUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    muscle_group: Optional[str] = None
+    equipment : Optional[str] = None
 
 class ExerciseResponse(ExerciseBase):
     id : int

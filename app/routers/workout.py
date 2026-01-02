@@ -61,3 +61,12 @@ def update_workout(id:int,workout:schemas.Workout,db:Session=Depends(get_db),cur
     db.commit()
     updated_data = db_workout.first()
     return updated_data
+
+@router.delete('/{id}',status_code=status.HTTP_204_NO_CONTENT)
+def delete_workout(id:int,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+    workout = db.query(models.Workout).filter(models.Workout.id == id).first()
+    if workout is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout with id {id} not found')
+    db.delete(workout)
+    db.commit()
+    return {'message':'successfully deleted the workout'}
