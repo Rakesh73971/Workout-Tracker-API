@@ -1,5 +1,6 @@
 from pydantic import BaseModel,EmailStr
 from datetime import datetime
+from typing import Optional
 
 
 class UserBase(BaseModel):
@@ -31,6 +32,15 @@ class Workout(BaseModel):
     total_duration : int
     notes : str
 
+class WorkoutUpdate(BaseModel):
+    user_id : Optional[int] = None
+    title : Optional[str] = None
+    workout_date : Optional[datetime] = None
+    total_duration : Optional[int] = None
+    notes : Optional[str] = None
+
+
+
 class WorkoutResponse(Workout):
     id : int
 
@@ -51,3 +61,5 @@ class ExerciseResponse(ExerciseBase):
     class Config:
         from_attributes = True
     
+class TokenData(BaseModel):
+    id : Optional[int] = None
