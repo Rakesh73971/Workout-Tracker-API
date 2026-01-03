@@ -1,6 +1,6 @@
 from pydantic import BaseModel,EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional,List
 
 
 class UserBase(BaseModel):
@@ -70,7 +70,28 @@ class ExerciseResponse(ExerciseBase):
 class TokenData(BaseModel):
     id : Optional[int] = None
 
+class WorkoutExerciseBase(BaseModel):
+    workout_id : int
+    exercise_id : int
+    sets: int
+    reps : int
+    weight : float
+    duration : int
 
+class WorkoutExerciseUpdate(BaseModel):
+    workout_id : Optional[int] = None
+    exercise_id : Optional[int] = None
+    sets : Optional[int] = None
+    reps : Optional[int] = None
+    weight : Optional[float] = None
+    duration : Optional[int] = None
+    
+class WorkoutExerciseResponse(WorkoutExerciseBase):
+    id : int
+
+    class Config:
+        from_attributes = True
+    
 class ExerciseLogBase(BaseModel):
     user_id : int
     exercise_id : int
@@ -115,6 +136,52 @@ class BodyMeasurementUpdate(BaseModel):
 
 class BodyMeasurementResponse(BodyMeasurementBase):
     id : int
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedExerciseResponse(BaseModel):
+    data: List[ExerciseResponse]
+    total: int
+    page: int
+    totalPages: int
+
+    class Config:
+        from_attributes = True
+
+class PaginatedWorkoutResponse(BaseModel):
+    data : List[WorkoutResponse]
+    total : int
+    page : int
+    totalPages : int
+
+    class Config:
+        from_attributes = True
+
+class PaginatedWorkoutExerciseResponse(BaseModel):
+    data : List[WorkoutExerciseResponse]
+    total : int
+    page : int
+    totalPages : int
+
+    class Config:
+        from_attributes = True
+
+class PaginatedExerciseLogResponse(BaseModel):
+    data : List[ExerciseLogResponse]
+    total : int
+    page : int
+    totalPages : int
+
+    class Config:
+        from_attributes = True
+
+class PaginatedBodyMeasuresResponse(BaseModel):
+    data : List[BodyMeasurementResponse]
+    total : int
+    page : int
+    totalPages : int
 
     class Config:
         from_attributes = True

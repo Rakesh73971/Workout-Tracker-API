@@ -1,9 +1,10 @@
-from fastapi import APIRouter,HTTPException,status,Depends
+from fastapi import APIRouter,HTTPException,status,Depends,Query
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..oauth2 import get_current_user
 from  .. import schemas,models
 from typing import List
+import math
 
 
 router = APIRouter(
@@ -11,10 +12,18 @@ router = APIRouter(
     tags=['BodyMeasurements']
 )
 
-@router.get('/',status_code=status.HTTP_200_OK,response_model=List[schemas.BodyMeasurementResponse])
-def get_measurements(db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    measurements = db.query(models.BodyMeasurement).all()
-    return measurements
+@router.get('/',status_code=status.HTTP_200_OK,response_model=schemas.PaginatedBodyMeasuresResponse)
+def get_measurements(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=10),page:int=Query(1,ge=1)):
+    total = db.query(models.BodyMeasurement).count()
+    total_pages = math.ceil(total/limit)
+    offset = (page-1) * limit
+    measurements = db.query(models.BodyMeasurement).limit(limit).offset(offset).all()
+    return {
+        'data':measurements,
+        'total':total,
+        'page':page,
+        'totalPages':total_pages
+    }
 
 
 

@@ -1,9 +1,11 @@
-from fastapi import APIRouter,Depends,HTTPException,status
+from fastapi import APIRouter,Depends,HTTPException,status,Query
 from sqlalchemy.orm import Session
 from ..database import get_db
+from sqlalchemy import asc,desc
 from ..oauth2 import get_current_user
 from .. import models,schemas
-from typing import List
+from typing import Optional
+import math
 
 
 router = APIRouter(
@@ -12,10 +14,34 @@ router = APIRouter(
 )
 
 
-@router.get('/',status_code=status.HTTP_200_OK,response_model=List[schemas.ExerciseResponse])
-def get_exercises(db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    exercises = db.query(models.Exercise).all()
-    return exercises
+@router.get('/',status_code=status.HTTP_200_OK,response_model=schemas.PaginatedExerciseResponse)
+def get_exercises(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=100),page:int=Query(1,ge=1),search:Optional[str]="",sort_by:str=Query('id'),order:str=Query('asc')):
+    query = db.query(models.Exercise).filter(models.Exercise.name.contains(search))
+    
+    sort_fields = {
+        "id":models.Exercise.id,
+        'name':models.Exercise.name
+    }
+
+    total = query.count()
+    total_page = math.ceil(total/limit)
+    offset = (page-1) * limit
+
+    sort_column = sort_fields.get(sort_by,models.Exercise.id)
+
+    if order == 'desc':
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
+    exercises = query.limit(limit).offset(offset).all()
+    
+    return {
+        "data":exercises,
+        "total":total,
+        "page":page,
+        "totalPages":total_page
+    }
 
 
 @router.get('/{id}',status_code=status.HTTP_200_OK,response_model=schemas.ExerciseResponse)

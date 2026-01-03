@@ -1,19 +1,45 @@
-from fastapi import APIRouter,Depends,HTTPException,status
+from fastapi import APIRouter,Depends,HTTPException,status,Query
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..oauth2 import get_current_user
 from .. import models,schemas
-from typing import List
+from typing import Optional
+import math
+from sqlalchemy import asc,desc
 
 router = APIRouter(
     prefix='/exerciselogs',
     tags=['ExerciseLogs']
 )
 
-@router.get('/',status_code=status.HTTP_200_OK,response_model=List[schemas.ExerciseLogResponse])
-def get_exercise_logs(db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    exerciselogs = db.query(models.ExerciseLog).all()
-    return exerciselogs
+@router.get('/',status_code=status.HTTP_200_OK,response_model=schemas.PaginatedExerciseLogResponse)
+def get_exercise_logs(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=10),page:int=Query(1,ge=1),sort_by:str=Query('id'),order:str=Query('asc')):
+
+    sort_fields = {
+        "id":models.ExerciseLog.id,
+        'duration':models.ExerciseLog.duration
+    }
+
+    total = db.query(models.ExerciseLog).count()
+    total_pages = math.ceil(total/limit)
+    offset = (page-1) * limit
+    
+    sort_column = sort_fields.get(sort_by,models.ExerciseLog.id)
+    query = db.query(models.ExerciseLog)
+    
+    if order == 'desc':
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
+    exerciselogs = query.limit(limit).offset(offset).all()
+
+    return {
+        'data':exerciselogs,
+        'total':total,
+        'page':page,
+        'totalPages':total_pages
+    }
 
 
 @router.get('/{id}',status_code=status.HTTP_200_OK,response_model=schemas.ExerciseLogResponse)
