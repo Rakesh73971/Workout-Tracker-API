@@ -12,28 +12,22 @@ class UserBase(BaseModel):
     height : float
     weight : float
 
-class UserResponse(BaseModel):
+
+class UserResponse(UserBase):
     id : int
-    name : str
-    email : str
-    age : int
-    gender : str
-    height : float
-    weight : float
+    owner : int
     created_at : datetime
 
     class Config:
         from_attributes = True
 
-class Workout(BaseModel):
-    user_id : int
+class WorkoutCreate(BaseModel):
     title : str
     workout_date : datetime
     total_duration : int
     notes : str
 
 class WorkoutUpdate(BaseModel):
-    user_id : Optional[int] = None
     title : Optional[str] = None
     workout_date : Optional[datetime] = None
     total_duration : Optional[int] = None
@@ -41,8 +35,9 @@ class WorkoutUpdate(BaseModel):
 
 
 
-class WorkoutResponse(Workout):
+class WorkoutResponse(WorkoutCreate):
     id : int
+    owner_id :int
 
     class Config:
         from_attributes = True
@@ -93,7 +88,6 @@ class WorkoutExerciseResponse(WorkoutExerciseBase):
         from_attributes = True
     
 class ExerciseLogBase(BaseModel):
-    user_id : int
     exercise_id : int
     date : datetime
     sets : int
@@ -102,7 +96,6 @@ class ExerciseLogBase(BaseModel):
     duration : int
 
 class ExerciseLogUpdate(BaseModel):
-    user_id : Optional[int] = None
     exercise_id : Optional[int] = None
     date : Optional[datetime] = None
     sets : Optional[int] = None
@@ -112,12 +105,12 @@ class ExerciseLogUpdate(BaseModel):
 
 class ExerciseLogResponse(ExerciseLogBase):
     id : int
+    owner_id : int
 
     class Config:
         from_attributes = True
 
 class BodyMeasurementBase(BaseModel):
-    user_id : int
     date : datetime
     weight : float
     chest : float
@@ -126,7 +119,6 @@ class BodyMeasurementBase(BaseModel):
     thighs : float
 
 class BodyMeasurementUpdate(BaseModel):
-    user_id : Optional[int] = None
     date : Optional[datetime] = None
     weight : Optional[float] = None
     chest : Optional[float] = None
@@ -136,6 +128,7 @@ class BodyMeasurementUpdate(BaseModel):
 
 class BodyMeasurementResponse(BodyMeasurementBase):
     id : int
+    owner_id : int
 
     class Config:
         from_attributes = True

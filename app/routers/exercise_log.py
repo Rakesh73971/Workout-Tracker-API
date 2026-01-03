@@ -25,7 +25,7 @@ def get_exercise_logs(db:Session=Depends(get_db),current_user=Depends(get_curren
     offset = (page-1) * limit
     
     sort_column = sort_fields.get(sort_by,models.ExerciseLog.id)
-    query = db.query(models.ExerciseLog)
+    query = db.query(models.ExerciseLog).filter(models.ExerciseLog.owner_id == current_user.id)
     
     if order == 'desc':
         query = query.order_by(desc(sort_column))
@@ -44,7 +44,7 @@ def get_exercise_logs(db:Session=Depends(get_db),current_user=Depends(get_curren
 
 @router.get('/{id}',status_code=status.HTTP_200_OK,response_model=schemas.ExerciseLogResponse)
 def get_exercise_log(id:int,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    exercise_log = db.query(models.ExerciseLog).filter(models.ExerciseLog.id == id).first()
+    exercise_log = db.query(models.ExerciseLog).filter(models.ExerciseLog.id == id,models.ExerciseLog.owner_id == current_user.id).first()
     if exercise_log is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'exercise log with id {id} not found')
     return exercise_log
@@ -52,7 +52,7 @@ def get_exercise_log(id:int,db:Session=Depends(get_db),current_user=Depends(get_
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=schemas.ExerciseLogResponse)
 def create_exercise_logs(exercise_log:schemas.ExerciseLogBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    db_exerciselog = models.ExerciseLog(**exercise_log.dict())
+    db_exerciselog = models.ExerciseLog(**exercise_log.dict(),owner_id=current_user.id)
     db.add(db_exerciselog)
     db.commit()
     db.refresh(db_exerciselog)
@@ -65,6 +65,8 @@ def update_exercise_log(id:int,exerciselog:schemas.ExerciseLogUpdate,db:Session=
     existing_data = exercise_log.first()
     if exercise_log is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'exercise log with id {id} not found')
+    if existing_data.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized to perform requested action')
     exercise_log.update(exerciselog.dict(exclude_unset=True),synchronize_session=False)
     db.commit()
     updated_data = exercise_log.first()
@@ -76,6 +78,9 @@ def update_exercise_log(id:int,exerciselog:schemas.ExerciseLogBase,db:Session=De
     existing_log = db_exercise_log.first()
     if existing_log is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'exercise log with id {id} not found')
+    
+    if existing_log.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized to perform the requested action')
     db_exercise_log.update(exerciselog.dict(),synchronize_session=False)
     db.commit()
     updated_exercise_log = db_exercise_log.first()
@@ -86,6 +91,8 @@ def delete_exercise_log(id:int,db:Session=Depends(get_db),current_user=Depends(g
     db_exercise_log = db.query(models.ExerciseLog).filter(models.ExerciseLog.id == id).first()
     if db_exercise_log is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'exercise log with {id} not found')
+    if db_exercise_log.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized to perform the requested action')
     db.delete(db_exercise_log)
     db.commit()
     return {'message':'successfully deleted the exercise log'}

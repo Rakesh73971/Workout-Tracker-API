@@ -19,7 +19,7 @@ def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_use
         "id":models.Workout.id,
         'name':models.Workout.title
     }
-    query = db.query(models.Workout).filter(models.Workout.title.contains(search))
+    query = db.query(models.Workout).filter(models.Workout.title.contains(search),models.Workout.owner_id == current_user.id)
     total = query.count()
     total_pages = math.ceil(total/limit)
     offset = (page-1) * limit
@@ -44,7 +44,7 @@ def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_use
 
 @router.get('/{id}',status_code=status.HTTP_200_OK,response_model=schemas.WorkoutResponse)
 def get_workout(id:int,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    workout = db.query(models.Workout).filter(models.Workout.id == id).first()
+    workout = db.query(models.Workout).filter(models.Workout.id == id,models.Workout.owner_id == current_user.id).first()
     if workout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout with id {id} not found')
     return workout
@@ -52,8 +52,8 @@ def get_workout(id:int,db:Session=Depends(get_db),current_user=Depends(get_curre
 
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=schemas.WorkoutResponse)
-def create_workout(workout:schemas.Workout,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
-    workout_data = models.Workout(**workout.dict())
+def create_workout(workout:schemas.WorkoutCreate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+    workout_data = models.Workout(**workout.dict(exclude_unset=True),owner_id=current_user.id)
     db.add(workout_data)
     db.commit()
     db.refresh(workout_data)
@@ -67,6 +67,8 @@ def update_workout(id:int,workout:schemas.WorkoutUpdate,db:Session=Depends(get_d
     existing_data = workout_data.first()
     if workout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout id with {id} not found')
+    if workout_data.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
     workout_data.update(workout.dict(exclude_unset=True),synchronize_session=False)
     db.commit()
     updated_data = workout_data.first()
@@ -75,11 +77,14 @@ def update_workout(id:int,workout:schemas.WorkoutUpdate,db:Session=Depends(get_d
 
 
 @router.put('/{id}',status_code=status.HTTP_202_ACCEPTED,response_model=schemas.WorkoutResponse)
-def update_workout(id:int,workout:schemas.Workout,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+def update_workout(id:int,workout:schemas.WorkoutCreate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     db_workout = db.query(models.Workout).filter(models.Workout.id == id)
     existing_db = db_workout
     if existing_db is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout with id {id} not found')
+    
+    if db_workout.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
     db_workout.update(workout.dict(),synchronize_session=False)
     db.commit()
     updated_data = db_workout.first()
@@ -90,6 +95,10 @@ def delete_workout(id:int,db:Session=Depends(get_db),current_user=Depends(get_cu
     workout = db.query(models.Workout).filter(models.Workout.id == id).first()
     if workout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout with id {id} not found')
+    
+    if workout.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
+    
     db.delete(workout)
     db.commit()
     return {'message':'successfully deleted the workout'}

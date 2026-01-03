@@ -1,6 +1,7 @@
 from .database import Base
 from sqlalchemy import Column, Integer, String, Text, DECIMAL, TIMESTAMP, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 
 class User(Base):
@@ -21,12 +22,11 @@ class Workout(Base):
     __tablename__ = "workouts"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=False)
     workout_date = Column(TIMESTAMP(timezone=True), server_default=func.now())
     total_duration = Column(Integer, nullable=False)
     notes = Column(Text)
-
+    owner_id = Column(Integer,ForeignKey('users.id',ondelete='CASCADE'),nullable=False)
 
 class Exercise(Base):
     __tablename__ = "exercises"
@@ -55,23 +55,23 @@ class ExerciseLog(Base):
     __tablename__ = "exercise_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     exercise_id = Column(Integer, ForeignKey("exercises.id"), nullable=False)
     date = Column(TIMESTAMP(timezone=True), server_default=func.now())
     sets = Column(Integer)
     reps = Column(Integer)
     weight = Column(DECIMAL(5, 2))
     duration = Column(Integer)
+    owner_id = Column(Integer,ForeignKey('users.id',ondelete='CASCADE'),nullable=False)
 
 
 class BodyMeasurement(Base):
     __tablename__ = "body_measurements"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(TIMESTAMP(timezone=True), server_default=func.now())
     weight = Column(DECIMAL(5, 2), nullable=False)
     chest = Column(DECIMAL(5, 2))
     waist = Column(DECIMAL(5, 2))
     arms = Column(DECIMAL(5, 2))
     thighs = Column(DECIMAL(5, 2))
+    owner_id = Column(Integer,ForeignKey('users.id',ondelete='CASCADE'),nullable=False)
