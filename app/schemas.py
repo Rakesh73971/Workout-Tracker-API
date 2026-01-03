@@ -13,9 +13,14 @@ class UserBase(BaseModel):
     weight : float
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id : int
-    owner : int
+    name : str
+    email : EmailStr
+    age : int
+    gender : str
+    height : float
+    weight : float
     created_at : datetime
 
     class Config:
