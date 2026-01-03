@@ -25,7 +25,7 @@ def get_exercise_log(id:int,db:Session=Depends(get_db),current_user=Depends(get_
 
 
 @router.post('/',status_code=status.HTTP_201_CREATED,response_model=schemas.ExerciseLogResponse)
-def create_exercise_logs(exercise_log:schemas.ExerciseBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+def create_exercise_logs(exercise_log:schemas.ExerciseLogBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     db_exerciselog = models.ExerciseLog(**exercise_log.dict())
     db.add(db_exerciselog)
     db.commit()

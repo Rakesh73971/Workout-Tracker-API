@@ -94,3 +94,27 @@ class ExerciseLogResponse(ExerciseLogBase):
 
     class Config:
         from_attributes = True
+
+class BodyMeasurementBase(BaseModel):
+    user_id : int
+    date : datetime
+    weight : float
+    chest : float
+    waist : float
+    arms : float
+    thighs : float
+
+class BodyMeasurementUpdate(BaseModel):
+    user_id : Optional[int] = None
+    date : Optional[datetime] = None
+    weight : Optional[float] = None
+    chest : Optional[float] = None
+    waist : Optional[float] = None
+    arms : Optional[float] = None
+    thighs : Optional[float] = None
+
+class BodyMeasurementResponse(BodyMeasurementBase):
+    id : int
+
+    class Config:
+        from_attributes = True
