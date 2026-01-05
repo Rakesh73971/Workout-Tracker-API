@@ -1,4 +1,5 @@
-from fastapi import status,APIRouter,HTTPException,Depends,Query
+
+from fastapi import BackgroundTasks, status,APIRouter,HTTPException,Depends,Query,Request
 from sqlalchemy.orm import Session
 from sqlalchemy import asc,desc
 from .. import models,schemas
@@ -6,15 +7,22 @@ from ..database import get_db
 from ..oauth2 import get_current_user
 from typing import Optional
 import math
+from fastapi_cache.decorator import cache
+from fastapi_cache import FastAPICache
+import time
+
 
 router = APIRouter(
     prefix='/workouts',
     tags=['Workouts']
 )
 
+
+
 @router.get('/',status_code=status.HTTP_200_OK,response_model=schemas.PaginatedWorkoutResponse)
-def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=10),page:int=Query(1,ge=1),search:Optional[str]="",sort_by:str=Query('id'),order:str=Query('asc')):
-    
+def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=10),page:int=Query(1,ge=1),search:Optional[str]="",sort_by:str=Query('id'),order:str=Query('asc')):  
+    time.sleep(0.3)
+    start = time.time()
     sort_fields={
         "id":models.Workout.id,
         'name':models.Workout.title
@@ -32,7 +40,7 @@ def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_use
         query = query.order_by(asc(sort_column))
 
     workouts = query.limit(limit).offset(offset).all()
-
+    print("⏱ Time:", time.time() - start)
     return {
         'data':workouts,
         'total':total,
@@ -43,6 +51,7 @@ def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_use
 
 
 @router.get('/{id}',status_code=status.HTTP_200_OK,response_model=schemas.WorkoutResponse)
+@cache(expire=120)
 def get_workout(id:int,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     workout = db.query(models.Workout).filter(models.Workout.id == id,models.Workout.owner_id == current_user.id).first()
     if workout is None:
@@ -65,7 +74,7 @@ def create_workout(workout:schemas.WorkoutCreate,db:Session=Depends(get_db),curr
 def update_workout(id:int,workout:schemas.WorkoutUpdate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     workout_data = db.query(models.Workout).filter(models.Workout.id == id)
     existing_data = workout_data.first()
-    if workout is None:
+    if existing_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout id with {id} not found')
     if workout_data.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
