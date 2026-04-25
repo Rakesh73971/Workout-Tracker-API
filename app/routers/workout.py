@@ -19,10 +19,11 @@ router = APIRouter(
 
 
 
+
+
 @router.get('/',status_code=status.HTTP_200_OK,response_model=schemas.PaginatedWorkoutResponse)
 def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_user),limit:int=Query(10,ge=1,le=10),page:int=Query(1,ge=1),search:Optional[str]="",sort_by:str=Query('id'),order:str=Query('asc')):  
-    time.sleep(0.3)
-    start = time.time()
+    
     sort_fields={
         "id":models.Workout.id,
         'name':models.Workout.title
@@ -40,7 +41,6 @@ def get_workouts(db:Session=Depends(get_db),current_user=Depends(get_current_use
         query = query.order_by(asc(sort_column))
 
     workouts = query.limit(limit).offset(offset).all()
-    print("⏱ Time:", time.time() - start)
     return {
         'data':workouts,
         'total':total,
