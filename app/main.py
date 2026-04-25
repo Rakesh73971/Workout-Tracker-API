@@ -20,12 +20,3 @@ app.include_router(workout_exercise.router)
 app.include_router(exercise_log.router)
 app.include_router(body_measurement.router)
 
-
-@app.on_event("startup")
-async def startup():
-    redis = aioredis.from_url(
-        'redis://localhost:6379',
-        encoding = "utf8",
-        decode_responses=True
-    )
-    FastAPICache.init(RedisBackend(redis),prefix="fastapi-cache")   
