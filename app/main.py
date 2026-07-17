@@ -8,7 +8,7 @@ from redis import asyncio as aioredis
 
 
 
-app = FastAPI()
+app = FastAPI(title="Workout Tracker API")
 
 models.Base.metadata.create_all(bind=engine)
 
