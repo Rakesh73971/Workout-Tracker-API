@@ -21,12 +21,12 @@ def get_measurements(db:Session=Depends(get_db),current_user=Depends(get_current
         'chest':models.BodyMeasurement.chest
     }
 
-    total = db.query(models.BodyMeasurement).count()
+    query = db.query(models.BodyMeasurement).filter(models.BodyMeasurement.owner_id == current_user.id)
+    total = query.count()
     total_pages = math.ceil(total/limit)
     offset = (page-1) * limit
 
     sort_column = sort_fields.get(sort_by,models.BodyMeasurement.id)
-    query = db.query(models.BodyMeasurement).filter(models.BodyMeasurement.owner_id == current_user.id)
 
     if order == 'desc':
         query = query.order_by(desc(sort_column))
@@ -78,7 +78,7 @@ def update_measurement(id:int,measurements:schemas.BodyMeasurementUpdate,db:Sess
 
 
 @router.put('/{id}',status_code=status.HTTP_202_ACCEPTED,response_model=schemas.BodyMeasurementResponse)
-def update_measurement(id:int,body_measurement:schemas.BodyMeasurementBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+def update_measurement_put(id:int,body_measurement:schemas.BodyMeasurementBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     db_measurement = db.query(models.BodyMeasurement).filter(models.BodyMeasurement.id == id)
     existing_db = db_measurement.first()
     if existing_db is None:
