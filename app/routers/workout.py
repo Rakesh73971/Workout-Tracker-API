@@ -76,7 +76,7 @@ def update_workout(id:int,workout:schemas.WorkoutUpdate,db:Session=Depends(get_d
     existing_data = workout_data.first()
     if existing_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout id with {id} not found')
-    if workout_data.owner_id != current_user.id:
+    if existing_data.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
     workout_data.update(workout.dict(exclude_unset=True),synchronize_session=False)
     db.commit()
@@ -86,13 +86,13 @@ def update_workout(id:int,workout:schemas.WorkoutUpdate,db:Session=Depends(get_d
 
 
 @router.put('/{id}',status_code=status.HTTP_202_ACCEPTED,response_model=schemas.WorkoutResponse)
-def update_workout(id:int,workout:schemas.WorkoutCreate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+def update_workout_put(id:int,workout:schemas.WorkoutCreate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     db_workout = db.query(models.Workout).filter(models.Workout.id == id)
-    existing_db = db_workout
+    existing_db = db_workout.first()
     if existing_db is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'workout with id {id} not found')
     
-    if db_workout.owner_id != current_user.id:
+    if existing_db.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized')
     db_workout.update(workout.dict(),synchronize_session=False)
     db.commit()
