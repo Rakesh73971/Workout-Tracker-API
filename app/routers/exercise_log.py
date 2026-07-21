@@ -20,12 +20,12 @@ def get_exercise_logs(db:Session=Depends(get_db),current_user=Depends(get_curren
         'duration':models.ExerciseLog.duration
     }
 
-    total = db.query(models.ExerciseLog).count()
+    query = db.query(models.ExerciseLog).filter(models.ExerciseLog.owner_id == current_user.id)
+    total = query.count()
     total_pages = math.ceil(total/limit)
     offset = (page-1) * limit
     
     sort_column = sort_fields.get(sort_by,models.ExerciseLog.id)
-    query = db.query(models.ExerciseLog).filter(models.ExerciseLog.owner_id == current_user.id)
     
     if order == 'desc':
         query = query.order_by(desc(sort_column))
@@ -63,7 +63,7 @@ def create_exercise_logs(exercise_log:schemas.ExerciseLogBase,db:Session=Depends
 def update_exercise_log(id:int,exerciselog:schemas.ExerciseLogUpdate,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     exercise_log = db.query(models.ExerciseLog).filter(models.ExerciseLog.id == id)
     existing_data = exercise_log.first()
-    if exercise_log is None:
+    if existing_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'exercise log with id {id} not found')
     if existing_data.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail='Not authorized to perform requested action')
@@ -73,7 +73,7 @@ def update_exercise_log(id:int,exerciselog:schemas.ExerciseLogUpdate,db:Session=
     return updated_data
 
 @router.put('/{id}',status_code=status.HTTP_202_ACCEPTED,response_model=schemas.ExerciseLogResponse)
-def update_exercise_log(id:int,exerciselog:schemas.ExerciseLogBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
+def update_exercise_log_put(id:int,exerciselog:schemas.ExerciseLogBase,db:Session=Depends(get_db),current_user=Depends(get_current_user)):
     db_exercise_log = db.query(models.ExerciseLog).filter(models.ExerciseLog.id == id)
     existing_log = db_exercise_log.first()
     if existing_log is None:
